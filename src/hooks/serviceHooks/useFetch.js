@@ -1,13 +1,14 @@
 import { useState } from "react"
+import { RESPONSE_STATUS } from "../../utils/constants"
 
 const useFetch = (url) => {
-    const [configRatesList, setConfigRatesList] = useState([])
-    const [isLoading, setIsLoading] = useState(false)
+    const [configRatesList, setConfigRatesList] = useState({})
+    const [resStatus, setResStatus] = useState(RESPONSE_STATUS.initial)
 
     
     const fetchRateConfigs = async (path, queryData) => {
         console.log(path, queryData)
-        setIsLoading(true)
+        setResStatus(RESPONSE_STATUS.progress)
         const options = {
             method: "POST",
             headers: {
@@ -21,14 +22,15 @@ const useFetch = (url) => {
         // console.log(response)
         if(response.ok) {
             setConfigRatesList(jsonData)
+            setResStatus(RESPONSE_STATUS.success)
         }
         else {
             console.log(response.message)
+            setResStatus(RESPONSE_STATUS.failure)
         }
-        setIsLoading(false)
     }
 
-    return [configRatesList, fetchRateConfigs, isLoading]
+    return [configRatesList, fetchRateConfigs, resStatus]
 }
 
 export default useFetch

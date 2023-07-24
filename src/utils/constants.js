@@ -21,3 +21,9 @@ export const BUTTONS_ARRAY = [
     },
 
 ]
+export const RESPONSE_STATUS = {
+    initial: "INITIAL",
+    progress: "LOADING",
+    success: "SUCCESS",
+    failure: "FAILURE"
+}

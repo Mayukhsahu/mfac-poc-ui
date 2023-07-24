@@ -10,3 +10,11 @@
   right: 0;
   bottom: 0;
 }
+
+.transform-cls {
+  transform: translateY(calc(100% + 8px));
+}
+
+#maskList:hover #arrowIcon {
+  scale: 1.2;
+}
