@@ -18,3 +18,8 @@
 #maskList:hover #arrowIcon {
   scale: 1.2;
 }
+
+.popup-overlay {
+  background-color: rgba(66, 48, 48, 0.5);
+  backdrop-filter: blur(2px);
+}

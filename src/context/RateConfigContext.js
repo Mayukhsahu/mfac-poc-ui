@@ -1,7 +1,8 @@
 import {createContext} from 'react'
 
 const RateConfigContext = createContext({
-    tableName: ""
+    tableName: "",
+    refreshTable: () => {}
 })
 
 export default RateConfigContext

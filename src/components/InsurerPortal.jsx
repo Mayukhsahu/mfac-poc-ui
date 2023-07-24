@@ -8,13 +8,17 @@ import {
 import Button from "./Button";
 import useCreateDb from "../hooks/serviceHooks/useCreateDb";
 import useFetch from "../hooks/serviceHooks/useFetch";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TableList from "./TableList";
 import { ImUpload3 } from "react-icons/im";
 import { TbDatabaseSearch } from "react-icons/tb";
 import { AiOutlineArrowDown } from "react-icons/ai";
 import RateConfigContext from "../context/rateConfigContext";
-import CarImg from "../assets/car_img.svg"
+import CarImg from "../assets/car_img.svg";
+import useGetAllDbList from "../hooks/serviceHooks/useGetAllDbList";
+import { FallingLines, Rings } from "react-loader-spinner";
+import Loader from "./Loader";
+import DbItem from "./DbItem";
 
 const InsurerPortal = () => {
   const [excelData, convertToJson] = useXlsx();
@@ -25,53 +29,78 @@ const InsurerPortal = () => {
   const [rowName, setRowName] = useState("");
   const [rowId, setRowId] = useState("");
   const [isBtnExpanded, setIsBtnExpanded] = useState(false);
+  const [dataSrcList, getDbList, dbListRes] = useGetAllDbList();
 
+  useEffect(() => {
+    getDbList();
+  }, []);
+  // console.log("Insuerer portal", dataSrcList);
   const emitFileEvent = (e) => convertToJson(e);
 
-  const uploadTableData = () => postSourceData(POST_TABLE_URL, excelData);
+  const uploadTableData = async () => {
+    await postSourceData(POST_TABLE_URL, excelData);
+    getDbList();
+  };
 
   const fetchDataList = (path, queryData) =>
     getAllFetchRateConfigs(path, queryData);
 
-  const apiFunction = (btnName) => {
-    setIsBtnExpanded((state) => !state);
-    switch (btnName) {
-      case "getAll":
-        fetchDataList("get-all", { tableName: tableNameInput });
-        break;
-      case "getOneByName":
-        fetchDataList("get-one-by-name", { tableName: tableNameInput, rowName });
-      default:
-        break;
-    }
+  // const apiFunction = (btnName) => {
+  //   setIsBtnExpanded((state) => !state);
+  //   switch (btnName) {
+  //     case "getAll":
+  //       fetchDataList("get-all", { tableName: tableNameInput });
+  //       break;
+  //     case "getOneByName":
+  //       fetchDataList("get-one-by-name", {
+  //         tableName: tableNameInput,
+  //         rowName,
+  //       });
+  //     default:
+  //       break;
+  //   }
+  // };
+
+  const getTableData = (tableData) => {
+    setIsBtnExpanded(false);
+    fetchDataList("get-all", { tableName: tableData });
   };
 
   const rotateArrow = isBtnExpanded ? "rotate(0)" : "rotate(-135deg)";
 
+  const renderDataSrcList = () => {};
+
   const renderTable = () => {
-    const {tableName, data } = getAllList;
+    const { tableName, data } = getAllList;
+    // console.log(getAllResStatus);
     switch (getAllResStatus) {
       case RESPONSE_STATUS.failure:
-        return "Failed";
+        return <h1>Something went wrong. Try other database.</h1>;
       case RESPONSE_STATUS.progress:
-        return "Loading...";
+        return <Loader />;
       case RESPONSE_STATUS.success:
         return (
-          <RateConfigContext.Provider value={tableName}>
+          <RateConfigContext.Provider value={{tableName, refreshTable: getTableData}}>
             <TableList tableList={data} />
           </RateConfigContext.Provider>
         );
       default:
-        return "Fetch Some data to display...";
+        return (
+          <div className="flex h-52 text-center grow items-center justify-center">
+            <p className="text-slate-700 font-bold">
+              Fetch Some data to display...
+            </p>
+          </div>
+        );
     }
   };
 
   // console.log('Excel data', createDbres)
   return (
-    <div className="p-4 md:p-8 flex justify-center bg-[#FFF4DB]">
+    <div className="p-4 md:p-8 flex justify-center min-h-screen bg-[#FFF4DB]">
       <div className="p-4 max-w-6xl w-full">
-        <div className="flex justify-between">
-          <div className="min-w-[70%]">
+        <div className="flex">
+          <div className="min-w-[50%]">
             <div className="my-4">
               {createDbres.length === 0 ? (
                 <h1 className="font-bold text-slate-700">
@@ -104,13 +133,28 @@ const InsurerPortal = () => {
                     onChange={emitFileEvent}
                   />
                 </label>
-                <button
-                  type="click"
-                  onSubmit={uploadTableData}
-                  className="before:content-[''] before:p-[2px] before:-top-[0] before:z-[100] before:left-[1.85rem] before:absolute before:rounded-l-full before:shadow-[-3px_-2px_0_1px_#FFF4DB] after:content-[''] after:p-[2px] after:-bottom-[0] after:z-[100] after:left-[1.85rem] after:absolute after:rounded-l-full after:shadow-[-3px_2px_0_1px_#FFF4DB] after:bg-#ecccbb absolute -right-8 inset-y-1 pl-10 pr-4 bg-[#ecccbb] text-[#36241b] font-mavenPro font-semibold rounded-full hover:tracking-wider w-[109.13px] transition-all hover:bg-[#c7ab9c]"
-                >
-                  Upload
-                </button>
+                {isLoading ? (
+                  <div className="absolute -right-8 pl-10 pr-4 w-[109.13px]">
+                    <Rings
+                      height="50"
+                      width="80"
+                      color="#36241b"
+                      radius="6"
+                      wrapperStyle={{}}
+                      wrapperClass=""
+                      visible={true}
+                      ariaLabel="rings-loading"
+                    />
+                  </div>
+                ) : (
+                  <button
+                    type="click"
+                    onClick={uploadTableData}
+                    className="before:content-[''] pointer-events-auto before:pointer-events-none after:pointer-events-none before:p-[2px] before:-top-[0] before:z-[100] before:left-[1.85rem] before:absolute before:rounded-l-full before:shadow-[-3px_-2px_0_1px_#FFF4DB] after:content-[''] after:p-[2px] after:-bottom-[0] after:z-[100] after:left-[1.85rem] after:absolute after:rounded-l-full after:shadow-[-3px_2px_0_1px_#FFF4DB] after:bg-#ecccbb absolute -right-8 inset-y-1 pl-10 pr-4 bg-[#ecccbb] text-[#36241b] font-mavenPro font-semibold rounded-full hover:tracking-wider w-[109.13px] transition-all hover:bg-[#c7ab9c]"
+                  >
+                    Upload
+                  </button>
+                )}
               </div>
               <ul className="mt-4 -left-2 relative w-[250px] h-20 mb-20">
                 <li
@@ -139,75 +183,39 @@ const InsurerPortal = () => {
                     <AiOutlineArrowDown className="text-[#FFF4DB]" />
                   </span>
                 </li>
-                {BUTTONS_ARRAY.map((button) => (
+                {dataSrcList.map((dataSrcItem) => (
                   <Button
-                    key={button.id}
-                    btnData={button}
-                    indexVal={BUTTONS_ARRAY.indexOf(button)}
-                    apiCall={apiFunction}
+                    key={dataSrcItem.id}
+                    tableData={dataSrcItem}
+                    indexVal={dataSrcList.indexOf(dataSrcItem)}
+                    apiCall={getTableData}
                     isBtnExpanded={isBtnExpanded}
                   />
                 ))}
               </ul>
             </div>
-            {/* <div className="flex gap-2 flex-wrap">
-              <div className="flex-col flex gap-1">
-                <label
-                  className="ml-[.90rem] text-sm font-medium text-[#36241b]"
-                  htmlFor="table"
-                >
-                  Table name
-                </label>
-                <input
-                  id="table"
-                  type="text"
-                  className="rounded-lg pl-4 py-1 outline-none bg-[#665F4E] text-[#FFF4DB] placeholder:text-[#dad1ba]"
-                  placeholder="table"
-                  value={tableNameInput}
-                  onChange={(e) => setTableNameInput(e.target.value)}
-                />
-              </div>
-              <div className="flex-col flex gap-1">
-                <label
-                  className="ml-[.90rem] text-sm font-medium text-[#36241b]"
-                  htmlFor="type"
-                >
-                  Type
-                </label>
-                <input
-                  id="type"
-                  type="text"
-                  className="rounded-lg pl-4 py-1 outline-none bg-[#665F4E] text-[#FFF4DB] placeholder:text-[#dad1ba]"
-                  placeholder="rowName"
-                  value={rowName}
-                  onChange={(e) => setRowName(e.target.value)}
-                />
-              </div>
-              <div className="flex-col flex gap-1">
-                <label
-                  className="ml-[.90rem] text-sm font-medium text-[#36241b]"
-                  htmlFor="id"
-                >
-                  Id
-                </label>
-                <input
-                  id="id"
-                  type="text"
-                  className="rounded-lg pl-4 py-1 outline-none bg-[#665F4E] text-[#FFF4DB] placeholder:text-[#dad1ba]"
-                  placeholder="rowId"
-                  value={rowId}
-                  onChange={(e) => setRowId(e.target.value)}
-                />
-              </div>
-            </div> */}
           </div>
           <div>
-            <div className="flex justify-end items-center">
+            <div className="md:flex w-[300px] justify-end items-center hidden">
               <img src={CarImg} className="w-full" alt="car image" />
             </div>
           </div>
         </div>
-        {renderTable()}
+        <div className="flex">
+          <ul className="flex flex-col gap-1 mt-[1.3rem]">
+            <li className="bg-[#A06A50] py-[2rem] px-4 rounded-tl-[50px] shadow-lg">
+              <h1 className="text-[#ecccbb] font-medium">Tables</h1>
+            </li>
+            {dataSrcList.map((dataSrcItem) => (
+              <DbItem
+                key={dataSrcItem.id}
+                tableData={dataSrcItem}
+                apiCall={getTableData}
+              />
+            ))}
+          </ul>
+          {renderTable()}
+        </div>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ const useCreateDb = () => {
 
     const postSourceData = async (url, sourceData) => {
         setIsLoading(true)
-
+        console.log(url, sourceData)
         const options = {
             method: "POST",
             headers: {
